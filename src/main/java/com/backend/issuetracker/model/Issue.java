@@ -2,6 +2,7 @@ package com.backend.issuetracker.model;
 
 import jakarta.persistence.*;
 import org.locationtech.jts.geom.Point;
+
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
 @Table(name = "issue")
 public class Issue {
 
-    public enum Status { OPEN, IN_PROGRESS, RESOLVED, CLOSED }
+    public enum IssueStatus { OPEN, IN_PROGRESS, RESOLVED, CLOSED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +33,7 @@ public class Issue {
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.OPEN;
+    private IssueStatus issueStatus = IssueStatus.OPEN;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -56,8 +57,8 @@ public class Issue {
     public void setLocation(Point location) { this.location = location; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public Status getStatus() { return status; }
-    public void setStatus(Status status) { this.status = status; }
+    public IssueStatus getIssueStatus() { return issueStatus; }
+    public void setIssueStatus(IssueStatus issueStatus) { this.issueStatus = issueStatus; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public User getReportedBy() { return reportedBy; }

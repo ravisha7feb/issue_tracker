@@ -1,6 +1,6 @@
 package com.backend.issuetracker.controller;
 
-import com.backend.issuetracker.dto.CreateIssueRequest;
+import com.backend.issuetracker.dto.IssueRequestDTO;
 import com.backend.issuetracker.model.Issue;
 import com.backend.issuetracker.model.User;
 import com.backend.issuetracker.repository.IssueRepository;
@@ -28,28 +28,26 @@ public class IssueController {
     }
 
     @PostMapping
-    public ResponseEntity<Issue> createIssue(@RequestBody CreateIssueRequest req) {
+    public ResponseEntity<Issue> createIssue(@RequestBody IssueRequestDTO req) {
         Issue issue = new Issue();
-        issue.setTitle(req.title);
-        issue.setDescription(req.description);
+        issue.setTitle(req.getTitle());
+        issue.setDescription(req.getDescription());
 
-        // set geometry point if lat/lng provided
-        if (req.lat != null && req.lng != null) {
-            Point p = GeometryUtils.createPoint(req.lat, req.lng);
-            issue.setLocation(p);
-        }
+        // set geometry point if latitude/longitude provided
+        Point p = GeometryUtils.createPoint(req.getLatitude(), req.getLongitude());
+        issue.setLocation(p);
 
-        issue.setImageUrl(req.imageUrl);
+        issue.setImageUrl(req.getImageUrl());
 
         // set createdAt using OffsetDateTime (matches entity)
         issue.setCreatedAt(OffsetDateTime.now());
 
-        // set Status using enum from entity
-        issue.setStatus(Issue.Status.OPEN);
+        // set IssueStatus using enum from entity
+        issue.setIssueStatus(Issue.IssueStatus.OPEN);
 
         // link reporting user if provided
-        if (req.reportedByUserId != null) {
-            Optional<User> maybeUser = userRepository.findById(req.reportedByUserId);
+        if (req.getReportedBy() != null) {
+            Optional<User> maybeUser = userRepository.findById(req.getReportedBy());
             maybeUser.ifPresent(issue::setReportedBy);
         }
 
