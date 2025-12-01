@@ -7,9 +7,12 @@ import com.backend.issuetracker.repository.IssueRepository;
 import com.backend.issuetracker.repository.UserRepository;
 import com.backend.issuetracker.util.GeometryUtils;
 import org.locationtech.jts.geom.Point;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,8 +30,13 @@ public class IssueController {
         this.userRepository = userRepository;
     }
 
-    @PostMapping
-    public ResponseEntity<Issue> createIssue(@RequestBody IssueRequestDTO req) {
+    @PostMapping(
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<Issue> createIssue(
+        @RequestPart("data") IssueRequestDTO req,
+        @RequestPart(value = "file", required = false) MultipartFile file) 
+    {
         Issue issue = new Issue();
         issue.setTitle(req.getTitle());
         issue.setDescription(req.getDescription());
@@ -37,12 +45,35 @@ public class IssueController {
         Point p = GeometryUtils.createPoint(req.getLatitude(), req.getLongitude());
         issue.setLocation(p);
 
-        issue.setImageUrl(req.getImageUrl());
+        // handle image upload
+        String imageUrl = null;
+        if (file != null && !file.isEmpty()) {
+            System.out.println("Received file: " + file.getOriginalFilename());
+            try {
+                // Use absolute path: project root or user home
+                String uploadDirPath = System.getProperty("user.dir") + File.separator + "uploads";
+                File uploadDir = new File(uploadDirPath);
+                if (!uploadDir.exists()) {
+                    boolean created = uploadDir.mkdirs();
+                    System.out.println("Upload dir created: " + created + " at " + uploadDir.getAbsolutePath());
+                }
 
-        // set createdAt using OffsetDateTime (matches entity)
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                File destination = new File(uploadDir, fileName);
+
+                file.transferTo(destination);
+                System.out.println("File saved to: " + destination.getAbsolutePath());
+                imageUrl = "/uploads/" + fileName;
+
+            } catch (Exception e) {
+                System.err.println("Error saving file: " + e.getMessage());
+                e.printStackTrace();
+                return ResponseEntity.status(500).body(null);
+            }
+        }
+
+        issue.setImageUrl(imageUrl);  // Set uploaded file URL (or null)
         issue.setCreatedAt(OffsetDateTime.now());
-
-        // set IssueStatus using enum from entity
         issue.setIssueStatus(Issue.IssueStatus.OPEN);
 
         // link reporting user if provided

@@ -1,12 +1,19 @@
 package com.backend.issuetracker.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import org.locationtech.jts.geom.Point;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 @Entity
 @Table(name = "issue")
 public class Issue {
@@ -26,6 +33,7 @@ public class Issue {
      * PostGIS geometry column, SRID 4326 (WGS84 lat/lon)
      * Using columnDefinition ensures Hibernate creates a geometry column.
      */
+    @JsonIgnore
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point location;
 
@@ -35,6 +43,7 @@ public class Issue {
     @Enumerated(EnumType.STRING)
     private IssueStatus issueStatus = IssueStatus.OPEN;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -65,4 +74,9 @@ public class Issue {
     public void setReportedBy(User reportedBy) { this.reportedBy = reportedBy; }
     public List<Comment> getComments() { return comments; }
     public void setComments(List<Comment> comments) { this.comments = comments; }
+    // Expose location as a readable WKT string in JSON:
+    @JsonProperty("location")
+    public String getLocationAsText() {
+        return location != null ? location.toText() : null;
+    }
 }
